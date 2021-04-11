@@ -29,11 +29,17 @@ export const render = (vnode, container) => {
       return _container ? _container.appendChild(dom) : dom;
     }
 
+    if (typeof vnode.tag === 'function') {
+      const isExisted = vnode.children.length !== 0;
+      const funVnode = vnode.tag({ children: vnode.children, ...vnode.props});
+      return _container ? _container.appendChild(_render(funVnode)) : _render(funVnode);
+    }
+
     const dom = document.createElement(vnode.tag);
     if (vnode.props) {
       setProps(dom, vnode.props);
     }
-    vnode.children.map((children) => _render(children, dom));
+    vnode.children.flat().map((children) => _render(children, dom));
     return _container ? _container.appendChild(dom) : dom;
   }
   container.innerHTML = '';
