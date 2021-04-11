@@ -30,7 +30,6 @@ export const render = (vnode, container) => {
     }
 
     if (typeof vnode.tag === 'function') {
-      const isExisted = vnode.children.length !== 0;
       const funVnode = vnode.tag({ children: vnode.children, ...vnode.props});
       return _container ? _container.appendChild(_render(funVnode)) : _render(funVnode);
     }
