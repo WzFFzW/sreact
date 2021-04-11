@@ -1,1 +1,7 @@
-export const createElement = () => {};
+export const createElement = (tag, props, ...children) => {
+  return {
+    tag,
+    props,
+    children,
+  }
+};
