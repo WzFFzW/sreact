@@ -9,7 +9,7 @@ const Hello = (
 
 const Wrap = (props) => {
   return (
-    <section>
+    <section onClick={() => { console.log(11) }}>
       <div>
         {props.children}
       </div>
