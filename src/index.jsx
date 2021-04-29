@@ -42,6 +42,28 @@ class Test extends Component {
     console.log(this.state.num);
   }
 
+  componentDidMount() {
+    console.log('componentDidMount')
+  }
+  componentWillUnmount() {
+    console.log('componentWillUnmount')
+  }
+  componentWillMount() {
+    console.log('componentWillMount')
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log('shouldComponentUpdate')
+  }
+  componentDidUpdate() {
+    console.log('componentDidUpdate')
+  }
+  componentWillUpdate() {
+    console.log('componentWillUpdate')
+  }
+  componentWillReceiveProps() {
+    console.log('componentWillReceiveProps')
+  }
+
   render() {
     return (
       <div>

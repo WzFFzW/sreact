@@ -18,19 +18,29 @@ function setProps(node, props) {
   });
 }
 
-const renderFunctionComponent = (vnode, root) => {
-  const { props, children, tag: Construct, instance } = vnode;
+const renderClassComponent = (vnode, root) => {
+  const { props, children, tag: Construct, instance, state, dom } = vnode;
   let component;
+  // TODO 处理state更新顺序问题
   if (instance) {
+    const { componentWillReceiveProps, componentWillUpdate, componentDidUpdate, shouldComponentUpdate } = instance;
+    componentWillReceiveProps.call(instance, props);
+    if (shouldComponentUpdate.call(instance, props, state)) {
+      return dom;
+    };
+    componentWillUpdate.call(instance, props, state)
     component = instance;
+    component.props = props;
+    componentDidUpdate.call(instance, props, state);
   } else {
     component = new Construct({ children, ...props});
     component._construct = Construct;
     component.root = root;
     vnode.instance = component;
+    component.componentWillMount();
   }
-  const jsx = component.render();
-  return jsx;
+  vnode.jsx = component.render();
+  return vnode;
 }
 
 export let rerender = () => {};
@@ -59,11 +69,14 @@ export const render = (vnode, container) => {
     if (typeof vnode.tag === 'function') {
       const { tag: Construct, props, children } = vnode;
       if (Construct.prototype.render) {
-        vnode = renderFunctionComponent(vnode, rootElement);
+        renderClassComponent(vnode, rootElement);
       } else {
-        vnode = vnode.tag({ children, ...props});
+        vnode.jsx = vnode.tag({ children, ...props});
       }
-      dom = _render(vnode, container);
+      dom = _render(vnode.jsx, container);
+      if (vnode.instance && vnode.instance.componentDidMount) {
+        vnode.instance.componentDidMount();
+      }
       return dom;
     } else {
       dom = renderNormalElement(vnode);

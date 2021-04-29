@@ -8,7 +8,7 @@ class Updater {
     const queue = this.queue;
     while (!!queue.length) {
       const { Com, state, cb } = queue.shift();
-      Com.state = { ...(Com.state || {}), ...state };
+      Com.nextState = { ...(Com.state || {}), ...state };
       if (typeof cb === 'function') {
         cb();
       }
