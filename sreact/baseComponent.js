@@ -10,6 +10,11 @@ export class Component {
   }
   componentDidMount() {}
   componentWillUnmount() {}
+  componentWillMount() {}
+  shouldComponentUpdate(nextProps, nextState) {}
+  componentDidUpdate() {}
+  componentWillUpdate() {}
+  componentWillReceiveProps() {}
   render() {
     return null;
   }

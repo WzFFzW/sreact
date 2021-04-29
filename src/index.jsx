@@ -31,6 +31,7 @@ class Test extends Component {
     this.setState({
       num: num + 1,
     }, () => { console.log('加完结果', this.state.num); });
+    console.log(this.state.num);
   }
 
   sub = () => {
@@ -38,6 +39,7 @@ class Test extends Component {
     this.setState({
       num: num - 1,
     }, () => { console.log('减完结果', this.state.num); });
+    console.log(this.state.num);
   }
 
   render() {
@@ -63,6 +65,6 @@ const App2 = (
 
 sreact.render(App1, document.getElementById('root1'));
 
-sreact.render(App2, document.getElementById('root2'));
+// sreact.render(App2, document.getElementById('root2'));
 
-sreact.render(<Test />, document.getElementById('root3'));
+// sreact.render(<Test />, document.getElementById('root3'));

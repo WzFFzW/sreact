@@ -35,37 +35,49 @@ const renderFunctionComponent = (vnode, root) => {
 
 export let rerender = () => {};
 
-
+// 渲染非函数和非类组件
+function renderNormalElement(vnode) {
+  let dom;
+  if (typeof vnode === 'boolean' || vnode === undefined || vnode === null) {
+    vnode = '';
+  } else if (typeof vnode === 'string' || typeof vnode === 'number') {
+    dom = document.createTextNode(vnode);
+  } else if (vnode.tag) {
+    dom = document.createElement(vnode.tag);
+    setProps(dom, vnode.props || {});
+  } else {
+    throw new Error('未知元素', vnode);
+  }
+  return dom;
+}
 
 export const render = (vnode, container) => {
   const rootElement = vnode;
   rootElement.isUpdating = true;
-  function _render(vnode, _container) {
-    if (typeof vnode === 'boolean' || vnode === undefined || vnode === null ) {
-      vnode = '';
-    }
-    if (typeof vnode === 'string' || typeof vnode === 'number') {
-      const dom = document.createTextNode(`${vnode}`);
-      return _container ? _container.appendChild(dom) : dom;
-    }
-
+  function _render(vnode, container) {
+    let dom;
     if (typeof vnode.tag === 'function') {
       const { tag: Construct, props, children } = vnode;
-      let jsxNode;
       if (Construct.prototype.render) {
-        jsxNode = renderFunctionComponent(vnode, rootElement);
+        vnode = renderFunctionComponent(vnode, rootElement);
       } else {
-        jsxNode = vnode.tag({ children, ...props});
+        vnode = vnode.tag({ children, ...props});
       }
-      return _container ? _container.appendChild(_render(jsxNode)) : _render(jsxNode);
+      dom = _render(vnode);
+    } else {
+      dom = renderNormalElement(vnode);
     }
-
-    const dom = document.createElement(vnode.tag);
-    if (vnode.props) {
-      setProps(dom, vnode.props);
+    (vnode.children || []).map((childrenNode) => {
+      if (Array.isArray(childrenNode)) {
+        childrenNode.map((node) => _render(node, dom));
+        return;
+      }
+      _render(childrenNode, dom);
+    });
+    if (container) {
+      container.appendChild(dom);
     }
-    vnode.children.flat().map((children) => _render(children, dom));
-    return _container ? _container.appendChild(dom) : dom;
+    return dom;
   }
   container.innerHTML = '';
   container.appendChild(_render(vnode));
