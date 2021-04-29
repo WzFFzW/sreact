@@ -18,20 +18,46 @@ function setProps(node, props) {
   });
 }
 
+const renderFunctionComponent = (vnode, root) => {
+  const { props, children, tag: Construct, instance } = vnode;
+  let component;
+  if (instance) {
+    component = instance;
+  } else {
+    component = new Construct({ children, ...props});
+    component._construct = Construct;
+    component.root = root;
+    vnode.instance = component;
+  }
+  const jsx = component.render();
+  return jsx;
+}
+
+export let rerender = () => {};
+
+
 
 export const render = (vnode, container) => {
+  const rootElement = vnode;
+  rootElement.isUpdating = true;
   function _render(vnode, _container) {
-    if (typeof vnode === 'boolean' || !vnode ) {
+    if (typeof vnode === 'boolean' || vnode === undefined || vnode === null ) {
       vnode = '';
     }
     if (typeof vnode === 'string' || typeof vnode === 'number') {
-      const dom = document.createTextNode(vnode);
+      const dom = document.createTextNode(`${vnode}`);
       return _container ? _container.appendChild(dom) : dom;
     }
 
     if (typeof vnode.tag === 'function') {
-      const funVnode = vnode.tag({ children: vnode.children, ...vnode.props});
-      return _container ? _container.appendChild(_render(funVnode)) : _render(funVnode);
+      const { tag: Construct, props, children } = vnode;
+      let jsxNode;
+      if (Construct.prototype.render) {
+        jsxNode = renderFunctionComponent(vnode, rootElement);
+      } else {
+        jsxNode = vnode.tag({ children, ...props});
+      }
+      return _container ? _container.appendChild(_render(jsxNode)) : _render(jsxNode);
     }
 
     const dom = document.createElement(vnode.tag);
@@ -43,4 +69,6 @@ export const render = (vnode, container) => {
   }
   container.innerHTML = '';
   container.appendChild(_render(vnode));
+  rootElement.isUpdating = false;
+  rerender = (vnode) => { render(vnode, container); };
 }
