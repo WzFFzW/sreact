@@ -54,17 +54,17 @@ class Test extends Component {
 }
 
 const App1 = (
-  <Wrap name="wzffzw">
+  <Wrap name="wzffzw1">
     {Hello}
   </Wrap>
 );
 
 const App2 = (
-  <Wrap name="wzffzw" />
+  <Wrap name="wzffzw123" />
 )
 
 sreact.render(App1, document.getElementById('root1'));
 
-// sreact.render(App2, document.getElementById('root2'));
+sreact.render(App2, document.getElementById('root2'));
 
-// sreact.render(<Test />, document.getElementById('root3'));
+sreact.render(<Test />, document.getElementById('root3'));

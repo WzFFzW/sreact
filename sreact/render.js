@@ -63,7 +63,8 @@ export const render = (vnode, container) => {
       } else {
         vnode = vnode.tag({ children, ...props});
       }
-      dom = _render(vnode);
+      dom = _render(vnode, container);
+      return dom;
     } else {
       dom = renderNormalElement(vnode);
     }
