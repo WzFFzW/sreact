@@ -1,3 +1,6 @@
+const FunComponentType = Symbol('functionComponent');
+const ClassComponentType = Symbol('classComponent');
+
 function setProps(node, props) {
   Object.keys(props).map((key) => {
     // 先实现onClick，真正的react自己有实现一套自己的事件机制，并非直接挂载在node上
@@ -19,25 +22,36 @@ function setProps(node, props) {
 }
 
 const renderClassComponent = (vnode, root) => {
-  const { props, children, tag: Construct, instance, state, dom } = vnode;
+  const { props, children, tag: Construct, instance, dom } = vnode;
   let component;
-  // TODO 处理state更新顺序问题
   if (instance) {
-    const { componentWillReceiveProps, componentWillUpdate, componentDidUpdate, shouldComponentUpdate } = instance;
-    componentWillReceiveProps.call(instance, props);
-    if (shouldComponentUpdate.call(instance, props, state)) {
+    const {
+      componentWillReceiveProps, componentWillUpdate, componentDidUpdate,
+      shouldComponentUpdate, updaterQueue = [], state, props: preProps,
+    } = instance;
+    // 合并state
+    const updaterCb = updaterQueue.map(({ cb }) => cb);
+    const nextState = updaterQueue.reduce((pre, { state: _state }) => {
+      if (typeof _state === 'function') {
+        _state = _state(pre, preProps);
+      }
+      return { ...pre, ..._state };
+    }, { ...state });
+    componentWillReceiveProps?.call(instance, props, nextState);
+    instance.state = nextState;
+    if (shouldComponentUpdate?.call(instance, props, nextState)) {
       return dom;
     };
-    componentWillUpdate.call(instance, props, state)
+    componentWillUpdate?.call(instance, props, state)
     component = instance;
     component.props = props;
-    componentDidUpdate.call(instance, props, state);
   } else {
     component = new Construct({ children, ...props});
+    component.isMounted = true;
     component._construct = Construct;
     component.root = root;
     vnode.instance = component;
-    component.componentWillMount();
+    component?.componentWillMount();
   }
   vnode.jsx = component.render();
   return vnode;
@@ -67,15 +81,25 @@ export const render = (vnode, container) => {
   function _render(vnode, container) {
     let dom;
     if (typeof vnode.tag === 'function') {
-      const { tag: Construct, props, children } = vnode;
+      const { tag: Construct, props, children, instance } = vnode;
+      let isMounted = false;
+      if (instance?.isMounted) {
+        isMounted = true;
+      }
       if (Construct.prototype.render) {
         renderClassComponent(vnode, rootElement);
+        vnode.type = ClassComponentType;
       } else {
         vnode.jsx = vnode.tag({ children, ...props});
+        vnode.type = FunComponentType;
       }
       dom = _render(vnode.jsx, container);
-      if (vnode.instance && vnode.instance.componentDidMount) {
-        vnode.instance.componentDidMount();
+      if (vnode.type === ClassComponentType && vnode?.instance) {
+        if (isMounted) {
+          vnode.instance?.componentDidUpdate();
+        } else {
+          vnode.instance?.componentDidMount();
+        }
       }
       return dom;
     } else {
