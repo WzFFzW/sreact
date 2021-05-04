@@ -11,7 +11,10 @@ class Updater {
     } else {
       Com.updaterQueue.push({ state, cb });
     }
-    this.updateRoot(root);
+    // TODO: 统一在下一个workLoop中更新，后续优化
+    setTimeout(() => {
+      this.updateRoot(root);
+    }, 0);
   }
 
   updateRoot(node) {

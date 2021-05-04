@@ -1,3 +1,5 @@
+import updater from './updater';
+
 const FunComponentType = Symbol('functionComponent');
 const ClassComponentType = Symbol('classComponent');
 
@@ -26,27 +28,30 @@ const renderClassComponent = (vnode, root) => {
   let component;
   if (instance) {
     const {
-      componentWillReceiveProps, componentWillUpdate, componentDidUpdate,
+      componentWillReceiveProps, componentWillUpdate,
       shouldComponentUpdate, updaterQueue = [], state, props: preProps,
     } = instance;
     // 合并state
-    const updaterCb = updaterQueue.map(({ cb }) => cb);
     const nextState = updaterQueue.reduce((pre, { state: _state }) => {
       if (typeof _state === 'function') {
         _state = _state(pre, preProps);
       }
       return { ...pre, ..._state };
     }, { ...state });
-    componentWillReceiveProps?.call(instance, props, nextState);
-    instance.state = nextState;
-    if (shouldComponentUpdate?.call(instance, props, nextState)) {
-      return dom;
+    if (props != preProps) {
+      componentWillReceiveProps?.call(instance, props, nextState);
+    }
+    const isExitedComponentUpdater = shouldComponentUpdate;
+    if (!isExitedComponentUpdater || shouldComponentUpdate?.call(instance, props, nextState)) {
+      componentWillUpdate?.call(instance, props, state)
+      component = instance;
+      component.props = props;
     };
-    componentWillUpdate?.call(instance, props, state)
-    component = instance;
-    component.props = props;
+    instance.state = nextState;
+    return dom;
   } else {
     component = new Construct({ children, ...props});
+    component.updater = updater;
     component.isMounted = true;
     component._construct = Construct;
     component.root = root;
@@ -77,7 +82,6 @@ function renderNormalElement(vnode) {
 
 export const render = (vnode, container) => {
   const rootElement = vnode;
-  rootElement.isUpdating = true;
   function _render(vnode, container) {
     let dom;
     if (typeof vnode.tag === 'function') {
@@ -94,9 +98,10 @@ export const render = (vnode, container) => {
         vnode.type = FunComponentType;
       }
       dom = _render(vnode.jsx, container);
-      if (vnode.type === ClassComponentType && vnode?.instance) {
+      if (vnode.type === ClassComponentType) {
         if (isMounted) {
           vnode.instance?.componentDidUpdate();
+          vnode.instance.updaterQueue.map(({ cb }) => cb());
         } else {
           vnode.instance?.componentDidMount();
         }

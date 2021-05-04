@@ -18,6 +18,8 @@ const Wrap = (props) => {
   );
 }
 
+const Result = (props) => <span>{props.num}</span>;
+
 class Test extends Component {
   constructor() {
     super();
@@ -52,7 +54,10 @@ class Test extends Component {
     console.log('componentWillMount')
   }
   shouldComponentUpdate(nextProps, nextState) {
+    console.log(nextState);
+    console.log(this.state);
     console.log('shouldComponentUpdate')
+    return true;
   }
   componentDidUpdate() {
     console.log('componentDidUpdate')
@@ -68,7 +73,7 @@ class Test extends Component {
     return (
       <div>
         <button onClick={this.add}>加</button>
-        <span>{this.state.num}</span>
+        <Result num={this.state.num} />
         <button onClick={this.sub}>减</button>
       </div>
     );
